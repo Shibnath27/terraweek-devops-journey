@@ -62,7 +62,10 @@ echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://
 sudo apt update && sudo apt install terraform
 
 # Windows
+winget install Hashicorp.Terraform
+#OR
 choco install terraform
+
 # verify
 terraform -version
 ```
@@ -71,6 +74,7 @@ terraform -version
 
 ```bash
 aws configure
+# Enter your Access Key ID, Secret Access Key, default region (e.g., ap-south-1), output format (json)
 aws sts get-caller-identity
 ```
 
