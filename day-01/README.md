@@ -69,6 +69,46 @@ choco install terraform
 # verify
 terraform -version
 ```
+### 🔹 AWS CLI Install
+
+1. Update packages and install dependencies:
+
+```bash
+
+sudo apt update && sudo apt install -y curl unzip
+
+```
+
+2. Download the installer file:
+  1. For x86_64 (Standard 64-bit Intel/AMD):
+
+  ```bash
+
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+  ```
+  2. For ARM64 (e.g., AWS Graviton, Raspberry Pi):
+
+  ```bash
+
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+
+  ```
+  3. Unzip and run the installation script:
+  
+  ```bash
+
+    unzip awscliv2.zip
+    sudo ./aws/install
+
+  ```
+  4. Verify the installation:
+  
+  ```bash
+
+  aws --version
+
+  ```
 
 ### 🔹 AWS CLI Configuration
 
