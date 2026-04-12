@@ -142,7 +142,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "ap-south-1"
+  region = "us-west-2"
 }
 
 resource "aws_s3_bucket" "my_bucket" {
@@ -177,8 +177,8 @@ terraform apply
 
 ```hcl
 resource "aws_instance" "my_ec2" {
-  ami           = "ami-0f5ee92e2d63afc18"
-  instance_type = "t2.micro"
+  ami           = "ami-0d76b909de1a0595d"
+  instance_type = "t3.micro"
 
   tags = {
     Name = "TerraWeek-Day1"
