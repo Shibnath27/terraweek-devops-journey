@@ -34,7 +34,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-2"
+  region = "us-west-2"
 }
 ```
 
@@ -243,9 +243,18 @@ Used when **no direct reference exists**, but order still matters.
 
 ## 📊 Dependency Graph
 
+Now visualize the entire dependency tree:
+
 ```bash
 terraform graph | dot -Tpng > graph.png
 ```
+If you don't have dot (Graphviz) installed, use:
+
+```bash
+terraform graph
+```
+
+and paste the output into an online Graphviz viewer.
 
 ✔ Visualizes full infrastructure dependency tree
 
