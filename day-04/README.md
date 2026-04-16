@@ -75,8 +75,9 @@ Inside `terraform.tfstate`:
 # ☁️ Task 2: Remote Backend (S3 + DynamoDB)
 
 ## 🔹 Step 1: Create Backend Infra
-
+First, create the backend infrastructure (do this manually or in a separate Terraform config):
 ```bash
+# Create S3 bucket for state storage
 aws s3api create-bucket \
   --bucket terraweek-state-shibnath \
   --region ap-south-1 \
@@ -84,12 +85,14 @@ aws s3api create-bucket \
 ```
 
 ```bash
+# Enable versioning (so you can recover previous state)
 aws s3api put-bucket-versioning \
   --bucket terraweek-state-shibnath \
   --versioning-configuration Status=Enabled
 ```
 
 ```bash
+# Create DynamoDB table for state locking
 aws dynamodb create-table \
   --table-name terraweek-state-lock \
   --attribute-definitions AttributeName=LockID,AttributeType=S \
@@ -139,7 +142,7 @@ yes → migrate state
 ---
 
 # 🔐 Task 3: State Locking
-
+State locking prevents two people from running terraform apply at the same time and corrupting the state.
 ## 🔹 Test
 
 Terminal 1:
@@ -149,7 +152,7 @@ terraform apply
 ```
 
 Terminal 2:
-
+While Terminal 1 is waiting for confirmation, in Terminal 2 run:
 ```bash
 terraform plan
 ```
@@ -183,9 +186,10 @@ terraform force-unlock <LOCK_ID>
 ---
 
 # 📥 Task 4: Import Existing Resource
+Not everything starts with Terraform. Sometimes resources already exist in AWS and you need to bring them under Terraform management.
 
 ## 🔹 Step 1: Create Bucket Manually
-
+ Manually create an S3 bucket in the AWS console -- name it terraweek-import-test-<yourname>
 Example:
 
 ```
@@ -195,6 +199,7 @@ terraweek-import-test-shibnath
 ---
 
 ## 🔹 Step 2: Add Resource Block
+Write a resource "aws_s3_bucket" block in your config for this bucket (just the bucket name, nothing else)
 
 ```hcl
 resource "aws_s3_bucket" "imported" {
@@ -205,7 +210,7 @@ resource "aws_s3_bucket" "imported" {
 ---
 
 ## 🔹 Step 3: Import
-
+Import it:
 ```bash
 terraform import aws_s3_bucket.imported terraweek-import-test-shibnath
 ```
