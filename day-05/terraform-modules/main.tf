@@ -2,6 +2,9 @@ provider "aws" {
   region = var.region
 }
 
+# -----------------------------
+# Data Source (Dynamic AMI)
+# -----------------------------
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
@@ -12,40 +15,59 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
-# Simple VPC (temporary before registry module)
-resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
+# -----------------------------
+# VPC (Registry Module)
+# -----------------------------
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
+
+  name = local.name_prefix
+  cidr = var.vpc_cidr
+
+  azs             = ["${var.region}a", "${var.region}b"]
+  public_subnets  = var.public_subnets
+  private_subnets = var.private_subnets
+
+  enable_nat_gateway   = false
+  enable_dns_hostnames = true
+
+  tags = local.common_tags
 }
 
-resource "aws_subnet" "public" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.1.0/24"
-}
-
-# SG Module
+# -----------------------------
+# Security Group Module
+# -----------------------------
 module "web_sg" {
   source        = "./modules/security-group"
-  vpc_id        = aws_vpc.main.id
-  sg_name       = "terraweek-web-sg"
-  ingress_ports = [22, 80, 443]
+  vpc_id        = module.vpc.vpc_id
+  sg_name       = "${local.name_prefix}-sg"
+  ingress_ports = var.allowed_ports
   tags          = local.common_tags
 }
 
-# EC2 Modules (Reusability)
+# -----------------------------
+# EC2 Module - Web Server
+# -----------------------------
 module "web_server" {
   source             = "./modules/ec2-instance"
   ami_id             = data.aws_ami.amazon_linux.id
-  subnet_id          = aws_subnet.public.id
+  instance_type      = var.environment == "prod" ? "t3.small" : var.instance_type
+  subnet_id          = module.vpc.public_subnets[0]
   security_group_ids = [module.web_sg.sg_id]
-  instance_name      = "terraweek-web"
+  instance_name      = "${local.name_prefix}-web"
   tags               = local.common_tags
 }
 
+# -----------------------------
+# EC2 Module - API Server
+# -----------------------------
 module "api_server" {
   source             = "./modules/ec2-instance"
   ami_id             = data.aws_ami.amazon_linux.id
-  subnet_id          = aws_subnet.public.id
+  instance_type      = var.environment == "prod" ? "t3.small" : var.instance_type
+  subnet_id          = module.vpc.public_subnets[0]
   security_group_ids = [module.web_sg.sg_id]
-  instance_name      = "terraweek-api"
+  instance_name      = "${local.name_prefix}-api"
   tags               = local.common_tags
 }
