@@ -11,6 +11,7 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
+data "aws_availability_zones" "available" {}
 # -----------------------------
 # VPC (Registry Module)
 # -----------------------------
@@ -27,6 +28,7 @@ module "vpc" {
 
   enable_nat_gateway   = false
   enable_dns_hostnames = true
+  map_public_ip_on_launch = true
 
   tags = local.common_tags
 }
