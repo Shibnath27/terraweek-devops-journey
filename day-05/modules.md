@@ -17,6 +17,9 @@ Today, I implemented **modular infrastructure** using **Terraform** by:
 ## 📁 Project Layout
 
 ```
+terraform-backend/
+│ │
+│ └── main.tf               #create s3 & dynamo for state lock
 terraform-modules/
 │
 ├── main.tf                 # Root module -- calls child modules
@@ -24,7 +27,9 @@ terraform-modules/
 ├── outputs.tf              # Root outputs
 ├── providers.tf            # Provider config
 ├── locals.tf
-│
+├── env/                    #environment-specific tfvars files
+│   ├── dev.tfvars
+│   └── prod.tfvars
 └── modules/
     ├── ec2-instance/
     │   ├── main.tf         # EC2 resource definition
@@ -334,7 +339,28 @@ module.vpc.aws_vpc.this
 module.web_server.aws_instance.this
 module.web_sg.aws_security_group.this
 ```
-
+## 🔹 tfvars-based approach
+📄 dev.tfvars
+```bash
+project_name = "terraweek"
+environment  = "dev"
+instance_type = "t2.micro"
+```
+📄 prod.tfvars
+```bash
+project_name  = "terraweek"
+environment   = "prod"
+instance_type = "t3.small"
+```
+3. Run explicitly
+Dev
+```bash
+terraform plan -var-file="dev.tfvars"
+```
+Prod
+```bash
+terraform plan -var-file="prod.tfvars"
+```
 ---
 
 # 🔥 Final Step
