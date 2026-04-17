@@ -21,7 +21,7 @@ module "vpc" {
   name = local.name_prefix
   cidr = var.vpc_cidr
 
-  azs             = ["${var.region}a", "${var.region}b"]
+  azs             = slice(data.aws_availability_zones.available.names, 0, 2)
   public_subnets  = var.public_subnets
   private_subnets = var.private_subnets
 
