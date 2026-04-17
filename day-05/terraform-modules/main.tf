@@ -1,7 +1,3 @@
-provider "aws" {
-  region = var.region
-}
-
 # -----------------------------
 # Data Source (Dynamic AMI)
 # -----------------------------
