@@ -21,4 +21,4 @@ terra-key
 # OS
 .DS_Store
 
-.aws/
+**/aws/
