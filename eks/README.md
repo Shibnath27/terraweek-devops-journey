@@ -7,8 +7,8 @@
 Create this inside your repo:
 
 ```bash
-mkdir -p day-66-eks/terraform-eks/k8s
-cd day-66-eks/terraform-eks
+mkdir -p eks/terraform-eks/k8s
+cd eks/terraform-eks
 ```
 
 Final structure:
