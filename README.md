@@ -1,8 +1,10 @@
-# 🚀 TerraWeek DevOps Journey (Day 01–05)
+# 🚀 TerraWeek DevOps Journey
 
-This repository documents my hands-on journey into **Terraform and Infrastructure as Code (IaC)** as part of the TerraWeek challenge. Over the first five days, I moved from basic concepts to building modular, production-style infrastructure on AWS.
+This repository documents my hands-on journey into **Terraform, AWS, and Kubernetes**, progressing from basic Infrastructure as Code (IaC) concepts to provisioning a **production-style EKS cluster using Terraform modules**.
 
 ---
+
+# 📅 Learning Progress
 
 # 📅 Day 01 – Terraform Basics & First Infrastructure
 
@@ -216,22 +218,98 @@ terraform plan -var-file="env/prod.tfvars"
 
 ---
 
-# 🧠 Key Takeaways
+# 📌 What This Repo Covers
 
-* Terraform is **declarative, not imperative**
-* State file is the **single source of truth**
-* Modules enable **scalable infrastructure design**
-* Remote backend is mandatory for **team environments**
-* Variables & data sources make configs **dynamic**
+* Infrastructure as Code using Terraform
+* AWS resource provisioning (VPC, EC2, S3)
+* State management & remote backends
+* Modular Terraform architecture
+* Kubernetes cluster provisioning using EKS
+* Application deployment on Kubernetes
 
 ---
 
-# 🔥 What’s Next
+## 🔹 Terraform + EKS (Production-Level)
 
-* Terraform Workspaces
-* CI/CD Integration (GitHub Actions)
-* Multi-environment architecture
-* Production-grade infrastructure design
+🚀 **Major milestone: Provisioned a Kubernetes cluster using Terraform**
+
+### What I Built
+
+* VPC with public & private subnets
+* Amazon EKS cluster using Terraform module
+* Managed node group (EC2 instances)
+* Kubernetes deployment (Nginx)
+* LoadBalancer service for external access
+
+### Key Concepts
+
+* Infrastructure abstraction using Terraform modules
+* Kubernetes cluster provisioning via IaC
+* Networking design for Kubernetes (public vs private subnets)
+* Subnet tagging for LoadBalancer integration
+
+---
+
+# 🏗️ Project Structure
+
+```
+terraweek-devops-journey/
+├── day-01/
+├── day-02/
+├── day-03/
+├── day-04/
+├── day-05/
+├── day-eks/
+│   └── terraform-eks/
+│       ├── providers.tf
+│       ├── variables.tf
+│       ├── vpc.tf
+│       ├── eks.tf
+│       ├── outputs.tf
+│       ├── terraform.tfvars
+│       └── k8s/
+│           └── nginx-deployment.yaml
+```
+
+---
+
+# ⚙️ Technologies Used
+
+* Terraform
+* AWS (EC2, S3, VPC, EKS)
+* Kubernetes
+* kubectl
+
+---
+
+# 🧠 Key Takeaways
+
+* Terraform is **declarative** and scalable
+* State management is critical for production systems
+* Modules enable reusable infrastructure
+* Remote backends are mandatory for teams
+* EKS provisioning involves complex dependencies abstracted by modules
+* Kubernetes workloads can be deployed on fully automated infrastructure
+
+---
+
+# ⚠️ Important Notes
+
+* EKS setup includes **NAT Gateway (costly resource)**
+* Always destroy infrastructure after testing:
+
+  ```bash
+  terraform destroy
+  ```
+
+---
+
+# 🔥 Next Goals
+
+* Helm charts for Kubernetes deployments
+* AWS ALB Ingress Controller
+* CI/CD pipeline for Terraform + Kubernetes
+* GitOps (ArgoCD)
 
 ---
 

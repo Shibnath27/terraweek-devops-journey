@@ -1,4 +1,4 @@
-# 🚀 Day 66 – Provisioning Amazon EKS with Terraform
+# 🚀 Provisioning Amazon EKS with Terraform
 
 ## 📌 Overview
 
