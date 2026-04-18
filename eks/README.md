@@ -1,48 +1,17 @@
-# 🚀 Provisioning Amazon EKS with Terraform
-
-## 📌 Overview
-
-Today I provisioned a fully functional **Amazon EKS (Elastic Kubernetes Service)** cluster using Terraform modules — moving from manual Kubernetes setup to a **production-style, automated infrastructure approach**.
-
-This setup is:
-
-* Fully automated via Infrastructure as Code
-* Reproducible across environments
-* Destroyable with a single command
+# 🚀 Terraform EKS (Complete Step-by-Step Guide)
 
 ---
 
-# 🎯 Objectives
+# 📁 Step 1: Project Structure
 
-* Provision an EKS cluster using Terraform
-* Configure networking (VPC, subnets, NAT)
-* Deploy managed node groups
-* Connect using kubectl
-* Deploy a sample Nginx application
-* Clean up all resources
+Create this inside your repo:
 
----
+```bash
+mkdir -p day-66-eks/terraform-eks/k8s
+cd day-66-eks/terraform-eks
+```
 
-# 🏗️ Architecture
-
-* **VPC Module** (Terraform Registry)
-
-  * Public + Private subnets across 2 AZs
-  * NAT Gateway (single for cost optimization)
-
-* **EKS Module** (Terraform Registry)
-
-  * Managed Kubernetes control plane
-  * Managed node group (EC2 instances)
-
-* **Kubernetes Layer**
-
-  * Nginx Deployment (3 replicas)
-  * LoadBalancer Service (external access)
-
----
-
-# 📁 Project Structure
+Final structure:
 
 ```
 terraform-eks/
@@ -58,45 +27,170 @@ terraform-eks/
 
 ---
 
-# ⚙️ Terraform Configuration
+# ⚙️ Step 2: providers.tf
 
-## 🔹 Providers
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.0"
+    }
+  }
+}
 
-* AWS Provider (`~> 5.0`)
-* Kubernetes Provider (`~> 2.0`)
-
-## 🔹 Modules Used
-
-* VPC: terraform-aws-modules/vpc/aws
-* EKS: terraform-aws-modules/eks/aws
+provider "aws" {
+  region = var.region
+}
+```
 
 ---
 
-# 🚀 Deployment Steps
+# 📥 Step 3: variables.tf
 
-## 1. Initialize Terraform
+```hcl
+variable "region" {
+  type    = string
+  default = "ap-south-1"
+}
+
+variable "cluster_name" {
+  type    = string
+  default = "terraweek-eks"
+}
+
+variable "cluster_version" {
+  type    = string
+  default = "1.31"
+}
+
+variable "node_instance_type" {
+  type    = string
+  default = "t3.medium"
+}
+
+variable "node_desired_count" {
+  type    = number
+  default = 2
+}
+
+variable "vpc_cidr" {
+  type    = string
+  default = "10.0.0.0/16"
+}
+```
+
+---
+
+# 🌐 Step 4: vpc.tf
+
+```hcl
+data "aws_availability_zones" "available" {}
+
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
+
+  name = "terraweek-vpc"
+  cidr = var.vpc_cidr
+
+  azs             = slice(data.aws_availability_zones.available.names, 0, 2)
+  public_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]
+  private_subnets = ["10.0.3.0/24", "10.0.4.0/24"]
+
+  enable_nat_gateway     = true
+  single_nat_gateway     = true
+  enable_dns_hostnames   = true
+
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = 1
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = 1
+  }
+}
+```
+
+---
+
+# ☸️ Step 5: eks.tf
+
+```hcl
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 20.0"
+
+  cluster_name    = var.cluster_name
+  cluster_version = var.cluster_version
+
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
+
+  cluster_endpoint_public_access = true
+
+  eks_managed_node_groups = {
+    terraweek_nodes = {
+      instance_types = [var.node_instance_type]
+
+      min_size     = 1
+      max_size     = 3
+      desired_size = var.node_desired_count
+    }
+  }
+
+  tags = {
+    Environment = "dev"
+    Project     = "TerraWeek"
+  }
+}
+```
+
+---
+
+# 📤 Step 6: outputs.tf
+
+```hcl
+output "cluster_name" {
+  value = module.eks.cluster_name
+}
+
+output "cluster_endpoint" {
+  value = module.eks.cluster_endpoint
+}
+
+output "region" {
+  value = var.region
+}
+```
+
+---
+
+# 📄 Step 7: terraform.tfvars
+
+```hcl
+region = "ap-south-1"
+```
+
+---
+
+# 🚀 Step 8: Run Terraform
 
 ```bash
 terraform init
-```
-
-## 2. Review Plan
-
-```bash
 terraform plan
-```
-
-## 3. Apply Configuration
-
-```bash
 terraform apply
 ```
 
-⏳ *EKS cluster provisioning takes ~10–15 minutes*
+⏳ Wait 10–15 minutes
 
 ---
 
-# 🔗 Connect to Cluster
+# 🔗 Step 9: Connect kubectl
 
 ```bash
 aws eks update-kubeconfig --name terraweek-eks --region ap-south-1
@@ -112,129 +206,144 @@ kubectl get pods -A
 kubectl cluster-info
 ```
 
-✔ Expected:
+✔ Expect:
 
-* Worker nodes in **Ready** state
+* 2 nodes in **Ready**
 * kube-system pods running
 
 ---
 
-# 🌐 Deploy Application
+# 🌐 Step 10: Deploy Nginx
 
-## Apply Nginx Deployment
+## `k8s/nginx-deployment.yaml`
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-terraweek
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: nginx
+  ports:
+  - port: 80
+    targetPort: 80
+```
+
+---
+
+## Apply:
 
 ```bash
 kubectl apply -f k8s/nginx-deployment.yaml
 ```
 
-## Check Service
+---
+
+## Get External IP:
 
 ```bash
 kubectl get svc nginx-service -w
 ```
 
-✔ Access Nginx using LoadBalancer URL
+👉 Open browser → access Nginx
 
 ---
 
-# 🔍 Verification Commands
+# 🔍 Verification
 
 ```bash
 kubectl get nodes
 kubectl get pods
-kubectl get deployments
 kubectl get svc
+kubectl get deployments
 ```
 
 ---
 
-# 🧠 Key Learnings
+# 💣 Step 11: CLEANUP (CRITICAL)
 
-## 🔹 Why EKS Needs Public & Private Subnets
-
-* **Public Subnets** → Used by Load Balancers
-* **Private Subnets** → Secure worker nodes
-
----
-
-## 🔹 Subnet Tagging (Critical for EKS)
-
-```hcl
-"kubernetes.io/role/elb" = 1
-```
-
-→ Enables external LoadBalancer
-
-```hcl
-"kubernetes.io/role/internal-elb" = 1
-```
-
-→ Enables internal services
-
----
-
-## 🔹 Infrastructure Insights
-
-* EKS provisioning creates **30+ AWS resources**
-* Terraform modules abstract complex configurations
-* Node groups are auto-managed by AWS
-
----
-
-# ⚠️ Important Notes
-
-* EKS setup includes **NAT Gateway (costly)**
-* Always destroy resources after testing
-* Ensure LoadBalancer is deleted before destroying
-
----
-
-# 💣 Cleanup (Mandatory)
-
-## Step 1: Delete Kubernetes Resources
+## Delete workload first:
 
 ```bash
 kubectl delete -f k8s/nginx-deployment.yaml
 ```
 
-## Step 2: Destroy Infrastructure
+Wait until LoadBalancer is deleted.
+
+---
+
+## Destroy infra:
 
 ```bash
 terraform destroy
 ```
 
-✔ Verify:
+---
 
-* No EKS cluster
-* No EC2 instances
-* No NAT Gateway
-* No Load Balancers
+# 🧠 Key Concepts (Important for README)
+
+## Why Public + Private Subnets?
+
+* Public → LoadBalancer (external access)
+* Private → Worker nodes (secure)
 
 ---
 
-# 📊 Outcome
+## Why Subnet Tags?
 
-* ✅ EKS cluster provisioned via Terraform
-* ✅ kubectl configured successfully
-* ✅ Application deployed and accessible
-* ✅ Infrastructure cleaned up completely
+```
+kubernetes.io/role/elb
+```
 
----
+👉 Allows AWS to place public load balancers
 
-# 🔥 Next Steps
+```
+kubernetes.io/role/internal-elb
+```
 
-* Helm deployments
-* Ingress Controllers (ALB)
-* CI/CD with GitHub Actions
-* GitOps (ArgoCD)
+👉 For internal services
 
 ---
 
-# 👨‍💻 Author
+# ⚠️ Cost Warning
 
-**Shibnath**
-DevOps & Cloud Enthusiast 🚀
+EKS creates:
+
+* NAT Gateway 💸
+* EC2 nodes
+* Load Balancer
+
+👉 Always destroy after use
 
 ---
 
-# ⭐ If you found this useful, consider giving the repo a star!
+# 🎯 Final Outcome
+
+✔ EKS cluster via Terraform
+✔ kubectl connected
+✔ Nginx deployed
+✔ Clean destroy
+
+---
